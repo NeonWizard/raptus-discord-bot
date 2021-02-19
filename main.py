@@ -73,7 +73,7 @@ class Bot(discord.Client):
 
 				await self.channel.send(header)
 			else:
-				header = "ENTRY 0x{} -\n".format(random.randrange(1000, 9999))
+				header = "ENTRY 0x{}\n".format(random.randrange(1000, 9999))
 
 				await self.channel.send(header)
 
