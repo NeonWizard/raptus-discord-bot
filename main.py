@@ -38,6 +38,7 @@ class Bot(discord.Client):
 				temperature=1.0,
 				top_k=40
 			)[0]
+			story = story[:story.rfind("\n")]
 
 			return story
 		else:
@@ -50,6 +51,7 @@ class Bot(discord.Client):
 				temperature=1.0,
 				top_k=40
 			)[0]
+			schizo_post = schizo_post[:schizo_post.rfind(".")] + "."
 
 			return schizo_post
 
@@ -78,7 +80,6 @@ class Bot(discord.Client):
 				await self.channel.send(header)
 
 			response = await self.do_generate_post_async()
-			response = response[:response.rfind("\n")]
 
 			try:
 				await self.channel.send(response)
