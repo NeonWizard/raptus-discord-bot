@@ -13,8 +13,7 @@ class Bot(discord.Client):
 	def __init__(self):
 		super().__init__()
 
-		# self.story_mode = random.choice([True, False, False, False, False, False])
-		self.story_mode = True
+		self.story_mode = random.choice([True, False, False, False, False, False])
 
 	async def on_ready(self):
 		print("-- LOGGED IN --")
@@ -35,7 +34,7 @@ class Bot(discord.Client):
 				include_prefix=False,
 				model_name=config.story_model,
 				return_as_list=True,
-				length=256,
+				length=356,
 				temperature=1.0,
 				top_k=40
 			)[0]
@@ -74,7 +73,9 @@ class Bot(discord.Client):
 
 				await self.channel.send(header)
 			else:
-				pass
+				header = "ENTRY 0x{} -\n".format(random.randrange(1000, 9999))
+
+				await self.channel.send(header)
 
 			response = await self.do_generate_post_async()
 			response = response[:response.rfind("\n")]
