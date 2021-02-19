@@ -1,0 +1,8 @@
+[Unit]
+Description=Raptus Discord Bot
+OnFailure=unit-status-telegram@%n.service
+
+[Service]
+ExecStart=$(which python3.7) main.py
+Type=oneshot
+WorkingDirectory=$(pwd)

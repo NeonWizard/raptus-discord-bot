@@ -1,0 +1,9 @@
+[Unit]
+Description=Run Raptus Discord Bot every 6 hours of every day
+
+[Timer]
+Unit=raptus-discordbot.service
+OnCalendar=0/6:00
+
+[Install]
+WantedBy=timers.target
