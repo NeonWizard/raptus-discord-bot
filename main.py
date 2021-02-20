@@ -13,7 +13,7 @@ class Bot(discord.Client):
 	def __init__(self):
 		super().__init__()
 
-		self.story_mode = random.choice([True, False, False, False, False, False])
+		self.story_mode = random.random() < config.story_chance
 
 	async def on_ready(self):
 		print("-- LOGGED IN --")
@@ -47,7 +47,7 @@ class Bot(discord.Client):
 				include_prefix=False,
 				model_name=config.schizo_model,
 				return_as_list=True,
-				length=256,
+				length=300,
 				temperature=1.0,
 				top_k=40
 			)[0]
