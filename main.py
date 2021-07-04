@@ -65,23 +65,12 @@ class Bot(discord.Client):
 		self.channel = await self.fetch_channel(config.channel_id)
 
 		async with self.channel.typing():
-			if self.story_mode:
-				header = "Today, I have a story. "
-				if random.choice([True, False]):
-					header += "I would {} for you to listen.".format(random.choice(["love", "like"]))
-				else:
-					header += "Sit down {}".format(random.choice(["for a while and listen.", "and listen.", "for a bit."]))
-				header += "\n"
-
-				await self.channel.send(header)
-			else:
-				header = "Entry 0x{}\n".format(random.randrange(1000, 9999))
-
-				await self.channel.send(header)
-
 			response = await self.do_generate_post_async()
+			hashed = hex(abs(hash(response)) % (10 ** 16))
+			header = f"IDENTIFIER {hashed}"
 
 			try:
+				await self.channel.send(header)
 				await self.channel.send(response)
 			finally:
 				await self.close()
