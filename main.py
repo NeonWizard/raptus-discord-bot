@@ -1,59 +1,72 @@
-import gpt_2_simple as gpt2
 import discord
 from discord.ext.tasks import loop
 import asyncio
-import sys
 import functools
+import sys
 import random
+import requests
 
-import config
-
+from config import CONFIG
 
 class Bot(discord.Client):
 	def __init__(self):
 		super().__init__()
 
-		self.story_mode = random.random() < config.story_chance
+		self.story_mode = random.random() < float(CONFIG["STORY_CHANCE"])
+
+		# -- initialize ODIN
+		response = requests.post("https://odin.deadtired.me/api/auth", json={
+			"username": CONFIG["ODIN_USER"],
+			"password": CONFIG["ODIN_PASS"],
+		})
+		try:
+			data = response.json()
+			self._odin_token = data["token"]
+		except:
+			print("ERROR:")
+			print(response.text)
+			sys.exit(1)
 
 	async def on_ready(self):
 		print("-- LOGGED IN --")
 
 	def generate_post(self):
-		print("Loading GPT models...")
-		self.gpt2_sess = gpt2.start_tf_sess()
-
+		model_name = ""
+		text_length = 0
 		if self.story_mode:
-			gpt2.load_gpt2(self.gpt2_sess, model_name=config.story_model)
+			model_name = CONFIG["ODIN_STORY_MODEL"]
+			text_length = int(CONFIG["ODIN_STORY_LENGTH"])
 		else:
-			gpt2.load_gpt2(self.gpt2_sess, model_name=config.schizo_model)
+			model_name = CONFIG["ODIN_SCHIZO_MODEL"]
+			text_length = int(CONFIG["ODIN_SCHIZO_LENGTH"])
 
 		print("Generating post...")
+		response = requests.post(f"https://odin.deadtired.me/api/models/{model_name}",
+			json={
+				"include_prefix": False,
+				"length": text_length,
+				"temperature": 1.0,
+				"top_k": 40,
+			},
+			headers={
+				"X-API-KEY": self._odin_token,
+			},
+		)
+
+		try:
+			data = response.json()
+			content = data["data"][0]
+		except:
+			print("ERROR GENERATING TEXT:")
+			print(response.text)
+			sys.exit(1)
+
+		print(content)
+
 		if self.story_mode:
-			story = gpt2.generate(
-				self.gpt2_sess,
-				include_prefix=False,
-				model_name=config.story_model,
-				return_as_list=True,
-				length=356,
-				temperature=1.0,
-				top_k=40
-			)[0]
-			story = story[:story.rfind("\n")]
-
-			return story
+			return content[:content.rfind("\n")]
 		else:
-			schizo_post = gpt2.generate(
-				self.gpt2_sess,
-				include_prefix=False,
-				model_name=config.schizo_model,
-				return_as_list=True,
-				length=300,
-				temperature=1.0,
-				top_k=40
-			)[0]
-			schizo_post = schizo_post[:schizo_post.rfind(".")] + "."
-
-			return schizo_post
+			return content[:content.rfind(".")] + "."
 
 	async def do_generate_post_async(self):
 		return await self.loop.run_in_executor(None, self.generate_post)
@@ -61,8 +74,8 @@ class Bot(discord.Client):
 	async def startup(self):
 		await self.wait_until_ready()
 
-		self.guild = await self.fetch_guild(config.guild_id)
-		self.channel = await self.fetch_channel(config.channel_id)
+		self.guild = await self.fetch_guild(CONFIG["DISCORD_GUILD_ID"])
+		self.channel = await self.fetch_channel(CONFIG["DISCORD_CHANNEL_ID"])
 
 		async with self.channel.typing():
 			response = await self.do_generate_post_async()
@@ -75,11 +88,10 @@ class Bot(discord.Client):
 			finally:
 				await self.close()
 
-
 def main():
 	client = Bot()
 	client.loop.create_task(client.startup())
-	client.run(config.token)
+	client.run(CONFIG["DISCORD_TOKEN"])
 
 if __name__ == "__main__":
 	main()
